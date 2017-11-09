@@ -267,7 +267,7 @@ withAutoCompleteString:(NSString *)string
             [cell.textLabel setText:string];
             [cell.textLabel setFont:[UIFont fontWithName:self.font.fontName size:self.autoCompleteFontSize]];
         }
-    
+        
     } else {
         [cell.textLabel setText:string];
         [cell.textLabel setFont:[UIFont fontWithName:self.font.fontName size:self.autoCompleteFontSize]];
@@ -283,6 +283,17 @@ withAutoCompleteString:(NSString *)string
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
 {
     [cell setBackgroundColor:self.autoCompleteTableCellBackgroundColor];
+}
+
+
+- (UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section; {
+    
+    return nil;
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section {
+    
+    return 0;
 }
 
 #pragma mark - TableView Delegate
@@ -326,7 +337,7 @@ withAutoCompleteString:(NSString *)string
 {
     [self setAutoCompleteSuggestions:completions];
     [self.autoCompleteTableView reloadData];
-
+    
     if ([self.autoCompleteDelegate
          respondsToSelector:@selector(autoCompleteTextField:didChangeNumberOfSuggestions:)]) {
         [self.autoCompleteDelegate autoCompleteTextField:self
@@ -449,8 +460,8 @@ withAutoCompleteString:(NSString *)string
         [rootView insertSubview:self.autoCompleteTableView
                    belowSubview:self];
 #else
-        [self.superview insertSubview:self.autoCompleteTableView
-                         belowSubview:self];
+        [self.superview.superview insertSubview:self.autoCompleteTableView
+                                   belowSubview:self.superview];
 #endif
         [self.autoCompleteTableView setUserInteractionEnabled:YES];
         if(self.showTextFieldDropShadowWhenAutoCompleteTableIsOpen){
@@ -475,7 +486,7 @@ withAutoCompleteString:(NSString *)string
 {
     if ([self.autoCompleteDelegate respondsToSelector:@selector(autoCompleteTextField:willHideAutoCompleteTableView:)]) {
         [self.autoCompleteDelegate autoCompleteTextField:self
-                            willHideAutoCompleteTableView:self.autoCompleteTableView];
+                           willHideAutoCompleteTableView:self.autoCompleteTableView];
     }
     [self.autoCompleteTableView removeFromSuperview];
     [self restoreOriginalShadowProperties];
@@ -762,9 +773,9 @@ withAutoCompleteString:(NSString *)string
     [self.autoCompleteFetchQueue cancelAllOperations];
     
     MLPAutoCompleteFetchOperation *fetchOperation = [[MLPAutoCompleteFetchOperation alloc]
-                                                        initWithDelegate:self
-                                                        completionsDataSource:self.autoCompleteDataSource
-                                                        autoCompleteTextField:self];
+                                                     initWithDelegate:self
+                                                     completionsDataSource:self.autoCompleteDataSource
+                                                     autoCompleteTextField:self];
     
     [self.autoCompleteFetchQueue addOperation:fetchOperation];
 }
@@ -932,7 +943,7 @@ withAutoCompleteString:(NSString *)string
         } else if ([self.dataSource respondsToSelector:@selector(autoCompleteTextField:possibleCompletionsForString:)]){
             
             NSArray *results = [self.dataSource autoCompleteTextField:self.textField
-                                possibleCompletionsForString:self.incompleteString];
+                                         possibleCompletionsForString:self.incompleteString];
             
             if(!self.isCancelled){
                 [self didReceiveSuggestions:results];
@@ -1082,8 +1093,8 @@ withAutoCompleteString:(NSString *)string
         }
         
         NSDictionary * stringsWithEditDistances = @{kSortInputStringKey : currentString ,
-                                                         kSortObjectKey : originalObject,
-                                                  kSortEditDistancesKey : [NSNumber numberWithFloat:editDistanceOfCurrentString]};
+                                                    kSortObjectKey : originalObject,
+                                                    kSortEditDistancesKey : [NSNumber numberWithFloat:editDistanceOfCurrentString]};
         [editDistances addObject:stringsWithEditDistances];
     }
     
@@ -1111,19 +1122,19 @@ withAutoCompleteString:(NSString *)string
         
         NSObject *autoCompleteObject = stringsWithEditDistances[kSortObjectKey];
         NSString *suggestedString = stringsWithEditDistances[kSortInputStringKey];
-    
+        
         NSArray *suggestedStringComponents = [suggestedString componentsSeparatedByString:@" "];
         BOOL suggestedStringDeservesPriority = NO;
         for(NSString *component in suggestedStringComponents){
             NSRange occurrenceOfInputString = [[component lowercaseString]
-                                            rangeOfString:[inputString lowercaseString]];
+                                               rangeOfString:[inputString lowercaseString]];
             
             if (occurrenceOfInputString.length != 0 && occurrenceOfInputString.location == 0) {
                 suggestedStringDeservesPriority = YES;
                 [prioritySuggestions addObject:autoCompleteObject];
                 break;
             }
-    
+            
             if([inputString length] <= 1){
                 //if the input string is very short, don't check anymore components of the input string.
                 break;
@@ -1133,7 +1144,7 @@ withAutoCompleteString:(NSString *)string
         if(!suggestedStringDeservesPriority){
             [otherSuggestions addObject:autoCompleteObject];
         }
-
+        
     }
     
     NSMutableArray *results = [NSMutableArray array];
